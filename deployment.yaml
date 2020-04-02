@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: invoice
+  labels:
+    app: invoice
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 5001
+      targetPort: 5001
+      protocol: TCP
+  selector:
+    app: invoice
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invoice
+  labels:
+    app: invoice
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 2
+  replicas: 3
+  selector:
+    matchLabels:
+      app: invoice
+  template:
+    metadata:
+      labels:
+        app: invoice
+    spec:
+      containers:
+        - name: invoice
+          image: 703569030910.dkr.ecr.ap-south-1.amazonaws.com/invoice:VERSION
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log
+            - name: datadockercontainers
+              mountPath: /data/docker/containers
+              readOnly: true
+          ports:
+            - containerPort: 5001
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: datadockercontainers
+          hostPath:
+            path: /data/docker/containers
