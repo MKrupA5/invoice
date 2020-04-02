@@ -22,25 +22,6 @@ try {
     }
   }
 
-  stage('Container Security Scan') {
-  	node('master'){
-  	    sh 'echo "703569030910.dkr.ecr.ap-south-1.amazonaws.com/invoice:${BUILD_NUMBER} `pwd`/Dockerfile" > anchore_images'
-  	    anchore autoSubscribeTagUpdates: false, bailOnFail: false, bailOnPluginFail: false, name: 'anchore_images'
-      	}
-    }
-    
-  stage('Cleanup') {
-      node('master') {
-          sh ''' for i in `cat anchore_images | awk '{print $1}'`;do docker rmi $i; done '''
-      }   
-    }
-
-  stage('Deploy on Dev') {
-  	node('master'){
-        sh ''' sed -i 's/VERSION/'"${BUILD_NUMBER}"'/g' deployment.yaml '''
-  	    sh "kubectl apply -f deployment.yaml"
-      	}
-    }
 }
 catch (err){
     currentBuild.result = "FAILURE"
